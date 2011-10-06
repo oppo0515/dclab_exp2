@@ -61,7 +61,7 @@ module Cal2_512(
 `undef counter_bits
 endmodule
 
-module power(
+module Power(
 	// inputs
 	clk,
 	start,
@@ -79,12 +79,11 @@ module power(
 	input wire [`nbits-1:0] a2;
 	input wire [`nbits-1:0] a3;
 	// outputs
-	output wire done;
+	output reg done;
 	reg done_next;
 	output reg [`nbits-1:0] a0, a0_next;
 	// assign
 	reg [`nbits-1:0] a2Buf, a2Buf_next;
-	assign done = ~(&(a2Buf));
 
 	wire done512;
 	wire [`nbits-1:0] p2_512;
@@ -112,20 +111,20 @@ module power(
 		.clk(clk),
 		.start(start_m1),
 		.done(done_m1),
-		.x(x2),
-		.y(p2_512),
-		.n(a3),
-		.result(a0_ret)
+		.A(x2),
+		.B(p2_512),
+		.N(a3),
+		.out(a0_ret)
 	);
 
 	Mul256 m2(
 		.clk(clk),
 		.start(start_m2),
 		.done(done_m2),
-		.x(x2),
-		.y(x2),
-		.n(a3),
-		.result(x2_ret)
+		.A(x2),
+		.B(x2),
+		.N(a3),
+		.out(x2_ret)
 	);
 
 	always @(*) begin
@@ -171,11 +170,17 @@ module power(
 
 		if (negStart) begin
 			a2Buf_next = a2;
+			done_next = 1'b0;
 		end else begin
 			if (~start_m2) begin
 				a2Buf_next = {1'b0, a2Buf[`nbits-1:1]};
 			end else begin
 				a2Buf_next = a2Buf;
+			end
+			if ((~(|a2Buf)) & done_m1 & done_m2) begin
+				done_next = 1'b1;
+			end else begin
+				done_next = done;
 			end
 		end
 
@@ -208,5 +213,6 @@ module power(
 		waitMul <= waitMul_next;
 		prevStart <= prevStart_next;
 		prevDone512 <= prevDone512_next;
+		done <= done_next;
 	end
 endmodule

@@ -32,7 +32,7 @@ module pow_tb();
 		#1 clk = ~clk;
 	end
 
-	power p1(
+	Power p1(
 		// inputs
 		.clk(clk),
 		.start(start),
